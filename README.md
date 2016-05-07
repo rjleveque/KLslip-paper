@@ -13,7 +13,11 @@ To run these, the following dependencies are needed:
 - Python 2.x with the packages:
   Numpy, Scipy, matplotlib, pandas, seaborn
 
-- Clawpack version 5.3.1, see http://www.clawpack.org
+- Clawpack Version 5.3.1, see http://www.clawpack.org
+
+- The file `dtopotools.py` in this repository is a version modified from
+  what is in GeoClaw in Version 5.3.1.  
+  The figures in the paper were generated using commit e21399557b8c537.
 
 Note: The seed is set for the random number generator in order to reproduce
 the figures exactly.  Changing the seed will produce different realizations
