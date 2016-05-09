@@ -503,7 +503,7 @@ def test(ntrials = 10000, nterms=60):
         KL_slip = KL(z)
         dZr = dot(dZ,KL_slip)  # linear combination of dZ from unit sources
         Energy[j] = PotentialEnergy(dZr)
-        z_offshore = where(topo.Z > 0, dZr, 0.)
+        z_offshore = where(topo.Z < 0, dZr, 0.)
         Amplitude[j] = z_offshore.max() - z_offshore.min()
         z_shore[j] = dZ_CrescentCity(dZr)
         EtaMax[j] = z_offshore.max()
@@ -525,13 +525,13 @@ realizations['depth proxy'] = DepthProxy
 cmap_black = sns.dark_palette('black', as_cmap=True)
 
 g = sns.JointGrid('EtaMax','Energy',data=realizations,\
-    xlim=(0,9),ylim=(0.5,2))
+    xlim=(3,12),ylim=(0.5,2))
 g = g.plot_joint(sns.kdeplot, cmap=cmap_black)
 g = g.plot_marginals(sns.kdeplot, color='k', shade=True)
 savefigp('joint_Eta_Energy_60.jpg')
 
 g = sns.JointGrid('EtaMax','subsidence / uplift',data=realizations,\
-    xlim=(0,9),ylim=(-2,4))
+    xlim=(3,12),ylim=(-2,4))
 g = g.plot_joint(sns.kdeplot, cmap=cmap_black)
 g = g.plot_marginals(sns.kdeplot, color='k', shade=True)
 savefigp('joint_Eta_DBshore_60.jpg')
@@ -554,14 +554,14 @@ realizations2['depth proxy'] = DepthProxy
 
 
 g = sns.JointGrid('EtaMax','Energy',data=realizations2,\
-    xlim=(0,9),ylim=(0.5,2))
+    xlim=(3,12),ylim=(0.5,2))
 g = g.plot_joint(sns.kdeplot, cmap=cmap_black)
 g = g.plot_marginals(sns.kdeplot, color='k', shade=True)
 savefigp('joint_Eta_Energy_%i.jpg' % nterms2)
 
 
 g = sns.JointGrid('EtaMax','subsidence / uplift',data=realizations2,\
-    xlim=(0,9),ylim=(-2,4))
+    xlim=(3,12),ylim=(-2,4))
 g = g.plot_joint(sns.kdeplot, cmap=cmap_black)
 g = g.plot_marginals(sns.kdeplot, color='k', shade=True)
 savefigp('joint_Eta_DBshore_%i.jpg' % nterms2)
