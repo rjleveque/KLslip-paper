@@ -14,7 +14,7 @@ contain essentially the same code in a more readable form
 with some additional comments.  Also these were committed to the repository with
 figures included so you can view them on the GitHub pages:
 
-- https://github.com/rjleveque/KLslip-paper/blob/master/plot_chile2010_figures_demo.ipynb
+- https://github.com/rjleveque/KLslip-paper/blob/master/plot_chile2010_demo.ipynb
 - https://github.com/rjleveque/KLslip-paper/blob/master/KL1d_figures_demo.ipynb
 - https://github.com/rjleveque/KLslip-paper/blob/master/KL2d_figures_demo.ipynb
 
