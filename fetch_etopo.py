@@ -10,7 +10,7 @@ E.g. set resolution = 4./60. for 4-arcminute resolution.
 import os
 from clawpack.geoclaw import etopotools
 
-plot_topo = True
+plot_topo = False
 etopo_dir = '.'  # put the file here
 
 
