@@ -6,6 +6,9 @@ Python code to accompany the paper
   by R. J. LeVeque, K. Waagan, F. I. Gonz ́alez, D. Rim, and G. Lin,
   To appear in Pure & Applied Geophysics.
 
+The commit c9cdcde05c (tagged `version1`) corresponds to code used in Version
+1 of the preprint found at http://arxiv.org/abs/1605.02863
+
 The scripts `KL1d_figures.py` and `KL2d_figures.py` produce the figures that
 appear in the paper. 
 
