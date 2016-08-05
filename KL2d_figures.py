@@ -1,23 +1,26 @@
 
 from pylab import *
-import os,sys
-from numpy import random
-import seaborn.apionly as sns 
-import pandas as pd
-
 from clawpack.geoclaw import topotools, dtopotools
 from clawpack.visclaw import colormaps
+import os,sys
+
+from scipy import stats
+import KDEplots # local module for plotting kde
+
+from numpy import random
+import pandas as pd
+
 
 import fetch_etopo  # will fetch topo file if not already here
 
-subdir = 'figures'
+subdir = 'figs_CSZ'
 os.system('mkdir -p %s' % subdir)
 
 def savefigp(fname):
+    fname = fname.replace('png','jpg') # to output as jpg
     fname = os.path.join(subdir,fname)
-    savefig(fname, bbox_inches='tight')
+    savefig(fname,dpi=250,bbox_inches='tight')
     print "Created ",fname
-
 
 def compute_subfault_distances(fault):
     """
@@ -83,6 +86,9 @@ def compute_subfault_distances(fault):
         
 
 # read topo file for CSZ region:
+#topo = topotools.Topography()
+#topo.read('etopo1_-130_-120_35_55_4min.tt3',3)
+
 topo = topotools.Topography()
 topo.read('etopo1_-128_-122_40_50_1min.tt3',3)
 
@@ -203,6 +209,8 @@ contourf(topo.X,topo.Y,topo.Z,[0,20000],colors=[[.3,1,.3]])
 contour(topo.X,topo.Y,topo.Z,[0],colors='g')
 fault.plot_subfaults(ax)
 axis((-128,-122,40,50))
+xticks(fontsize=12)
+yticks(fontsize=12)
 
 cmap_slip = colormaps.make_colormap({0:'g',0.5:'w',1.:'m'})
 
@@ -222,10 +230,10 @@ for ii in range(ni):
 
         new_fault.plot_subfaults(ax,slip_color=True,cmin_slip=-1,cmax_slip=1,
                 plot_box=0., cmap_slip=cmap_slip, colorbar_shrink=shrink)
-        title('Mode %s' % pij)
+        title('Mode %s' % pij, fontsize=18)
         axis('off')
 
-savefigp('CSZ.jpg')
+savefigp('CSZ.png')
 
 
 
@@ -329,7 +337,41 @@ lam = lam[i]
 V = V[:,i]
 
 
-# Plot first several eigenmodes:
+if 0:
+    figure(figsize=(14,6))
+
+    cmap_slip = colormaps.make_colormap({0:'g',0.5:'w',1.:'m'})
+
+    ni = 1; nj = 4;
+    ax = axes((.1,.1,.2,.8))
+    contourf(topo.X,topo.Y,topo.Z,[0,20000],colors=[[.3,1,.3]])
+    fault.plot_subfaults(ax)
+    axis((-126,-123,40,44))
+
+    for ii in range(ni):
+        for jj in range(nj):
+            pij = ii*nj + jj
+            if jj<3:
+                ax = axes((.35 + jj*0.14,.12,.12,.76))
+                shrink = 0
+            else:
+                ax = axes((.35 + jj*0.14,.12,.17,.76))
+                shrink = 0.7
+            V_amp = sqrt(sum(V[:,pij]**2))    # abs(V[:,pij]).max()
+            #weight = sqrt(eigenvals[pij]) * V_amp / mean_amp
+            for j,s in enumerate(new_fault.subfaults):
+                s.slip = V[j,pij] * 15.
+
+            new_fault.plot_subfaults(ax,slip_color=True,cmin_slip=-1,cmax_slip=1,
+                    plot_box=0., cmap_slip=cmap_slip, colorbar_shrink=shrink)
+            title('Mode %s' % pij, fontsize=18)
+            axis('off')
+
+    savefigp('CSZmodes.png')
+
+
+
+# More modes:
 
 figure(figsize=(14,12))
 
@@ -359,10 +401,10 @@ for ii in range(ni):
 
         new_fault.plot_subfaults(ax,slip_color=True,cmin_slip=-1,cmax_slip=1,
                 plot_box=0., cmap_slip=cmap_slip, colorbar_shrink=0)
-        title('Mode %s' % pij)
+        title('Mode %s' % pij,fontsize=18)
         axis('off')
 
-savefigp('CSZmodes.jpg')
+savefigp('CSZmodes.png')
 
 
 
@@ -451,7 +493,7 @@ for i in range(1,6):
     ax = subplot(4,5,i)
     new_fault.plot_subfaults(ax, slip_color=True, cmax_slip=20., plot_box=False, colorbar_shrink=0)
     axis('off')
-    title('Realization %i\n %i terms' % (i,nterms), fontsize=10)
+    title('Realization %i\n %i terms' % (i,nterms), fontsize=14)
     #dtopo = new_fault.create_dtopography(x_dtopo,y_dtopo,times=[1.], verbose=False)
     dZr = dot(dZ,KL_slip)  # linear combination of dZ from unit sources
     ax = subplot(4,5,5+i)
@@ -460,8 +502,8 @@ for i in range(1,6):
     ylim(39.5,44.5)
     plot([xcc],[ycc],'wo')
     plot([xcc],[ycc],'kx')
-    title('E=%4.2f, dB=%5.2f' \
-        % (PotentialEnergy(dZr),dZ_CrescentCity(dZr)), fontsize=10)
+    title('E=%4.2f,\n dB=%5.2f' \
+        % (PotentialEnergy(dZr),dZ_CrescentCity(dZr)), fontsize=14)
     axis('off')
     
     z = z[:nterms2]
@@ -469,7 +511,7 @@ for i in range(1,6):
     ax = subplot(4,5,10+i)
     new_fault.plot_subfaults(ax, slip_color=True, cmax_slip=20., plot_box=False, colorbar_shrink=0)
     axis('off')
-    title('%i terms' % nterms2, fontsize=10)
+    title('%i terms' % nterms2, fontsize=14)
     #dtopo = new_fault.create_dtopography(x_dtopo,y_dtopo,times=[1.], verbose=False)
     dZr = dot(dZ,KL_slip)  # linear combination of dZ from unit sources
     ax = subplot(4,5,15+i)
@@ -478,11 +520,11 @@ for i in range(1,6):
     ylim(39.5,44.5)
     plot([xcc],[ycc],'wo')
     plot([xcc],[ycc],'kx')
-    title('E=%4.2f, dB=%5.2f' \
-        % (PotentialEnergy(dZr),dZ_CrescentCity(dZr)), fontsize=10)
+    title('E=%4.2f,\n dB=%5.2f' \
+        % (PotentialEnergy(dZr),dZ_CrescentCity(dZr)), fontsize=14)
     axis('off')
     
-savefigp('CSZrealizations.jpg')
+savefigp('CSZrealizations.png')
 
 
 
@@ -522,20 +564,7 @@ realizations['subsidence / uplift'] = z_shore
 realizations['EtaMax'] = EtaMax
 realizations['depth proxy'] = DepthProxy
 
-cmap_black = sns.dark_palette('black', as_cmap=True)
-
-g = sns.JointGrid('EtaMax','Energy',data=realizations,\
-    xlim=(3,12),ylim=(0.5,2))
-g = g.plot_joint(sns.kdeplot, cmap=cmap_black)
-g = g.plot_marginals(sns.kdeplot, color='k', shade=True)
-savefigp('joint_Eta_Energy_60.jpg')
-
-g = sns.JointGrid('EtaMax','subsidence / uplift',data=realizations,\
-    xlim=(3,12),ylim=(-2,4))
-g = g.plot_joint(sns.kdeplot, cmap=cmap_black)
-g = g.plot_marginals(sns.kdeplot, color='k', shade=True)
-savefigp('joint_Eta_DBshore_60.jpg')
-
+#realizations.to_pickle('data/realizations_2d_' + str(nterms) + '.pkl')
 
 
 random.seed(12345)
@@ -552,18 +581,91 @@ realizations2['subsidence / uplift'] = z_shore
 realizations2['EtaMax'] = EtaMax
 realizations2['depth proxy'] = DepthProxy
 
+#realizations2.to_pickle('data/realizations_2d_' + str(nterms2) + '.pkl')
 
-g = sns.JointGrid('EtaMax','Energy',data=realizations2,\
-    xlim=(3,12),ylim=(0.5,2))
-g = g.plot_joint(sns.kdeplot, cmap=cmap_black)
-g = g.plot_marginals(sns.kdeplot, color='k', shade=True)
-savefigp('joint_Eta_Energy_%i.jpg' % nterms2)
+# Compare KDE plots:
+
+Q1 = 'EtaMax'
+Q2 = 'subsidence / uplift'
+
+Nx = 200
+Ny = 201
+
+x0 = 3.
+x1 = 12.
+
+y0 = -2.
+y1 = 4.
+
+x = np.linspace(x0,x1,Nx)
+y = np.linspace(y0,y1,Ny)
+
+X,Y = np.meshgrid(x,y)
+
+xy = np.vstack((X.flatten(),Y.flatten()))
 
 
-g = sns.JointGrid('EtaMax','subsidence / uplift',data=realizations2,\
-    xlim=(3,12),ylim=(-2,4))
-g = g.plot_joint(sns.kdeplot, cmap=cmap_black)
-g = g.plot_marginals(sns.kdeplot, color='k', shade=True)
-savefigp('joint_Eta_DBshore_%i.jpg' % nterms2)
+## 60 terms:
+
+rvals = vstack((realizations[Q1].T, realizations[Q2].T))
+kde = stats.gaussian_kde(rvals)
+p = kde.pdf(xy) * (x1-x0)*(y1-y0)/float(Nx*Ny)
+rho = reshape(p,(Ny,Nx))
+
+KDEplots.joint_plot(X,Y,rho,xname='EtaMax (m)',yname='subsidence/uplift (m)')
+savefigp('joint_Eta_DBshore_60b.jpg')
+
+## 7 terms:
+
+rvals = vstack((realizations2[Q1].T, realizations2[Q2].T))
+kde2 = stats.gaussian_kde(rvals)
+p2 = kde2.pdf(xy) * (x1-x0)*(y1-y0)/float(Nx*Ny)
+rho2 = reshape(p2,(Ny,Nx))
+
+KDEplots.joint_plot(X,Y,rho2,xname='EtaMax (m)',yname='subsidence/uplift (m)')
+savefigp('joint_Eta_DBshore_7b.jpg')
+
+
+# Compare KDE plots:
+
+Q1 = 'EtaMax'
+Q2 = 'Energy'
+
+Nx = 200
+Ny = 201
+
+x0 = 3.
+x1 = 12.
+
+y0 = 0.8
+y1 = 1.6
+
+x = np.linspace(x0,x1,Nx)
+y = np.linspace(y0,y1,Ny)
+
+X,Y = np.meshgrid(x,y)
+
+xy = np.vstack((X.flatten(),Y.flatten()))
+
+
+## 60 terms:
+
+rvals = vstack((realizations[Q1].T, realizations[Q2].T))
+kde = stats.gaussian_kde(rvals)
+p = kde.pdf(xy) * (x1-x0)*(y1-y0)/float(Nx*Ny)
+rho = reshape(p,(Ny,Nx))
+
+KDEplots.joint_plot(X,Y,rho,xname='EtaMax (m)',yname='Energy (PetaJoules)')
+savefigp('joint_Eta_Energy_60b.jpg')
+
+## 7 terms:
+
+rvals = vstack((realizations2[Q1].T, realizations2[Q2].T))
+kde2 = stats.gaussian_kde(rvals)
+p2 = kde2.pdf(xy) * (x1-x0)*(y1-y0)/float(Nx*Ny)
+rho2 = reshape(p2,(Ny,Nx))
+
+KDEplots.joint_plot(X,Y,rho2,xname='EtaMax (m)',yname='Energy (PetaJoules)')
+savefigp('joint_Eta_Energy_7b.jpg')
 
 

@@ -1,22 +1,20 @@
 from pylab import *
+from clawpack.geoclaw import dtopotools 
 import sys, os
 
-from clawpack.geoclaw import dtopotools 
+from scipy import stats
+import KDEplots # local module for plotting kde
 
 import pandas as pd
 from numpy import random
 
-# this way of importing doesn't change matplotlib plot style:
-import seaborn.apionly as sns 
-
-cmap_black = sns.dark_palette('black', as_cmap=True)
-
-subdir = 'figures'
+subdir = 'figs_1d_gaussian_new'
 os.system('mkdir -p %s' % subdir)
 
 def savefigp(fname):
+    fname = fname.replace('png','jpg') # to output as jpg
     fname = os.path.join(subdir,fname)
-    savefig(fname, bbox_inches='tight')
+    savefig(fname,dpi=250,bbox_inches='tight')
     print "Created ",fname
     
 # Parameters to adjust...
@@ -103,8 +101,8 @@ elif taper=='exp_depth':
 
 if 0:
     plot(xkm, tau(x))
-    xlabel('km down-dip')
-    title('taper')
+    xlabel('km down-dip',fontsize=22)
+    title('taper',fontsize=24)
     ylim(-0.1,1.1);
 
 total_slip = mean_slip * len(x)
@@ -139,30 +137,43 @@ lam = lam[i]
 V = V[:,i]
 
 kplot=20
-figure(figsize=(5,4))
-loglog(range(1,kplot+1),sqrt(lam[:kplot]), 'o',label='sqrt(lambda)')
+#figure(figsize=(5,4))
+loglog(range(1,kplot+1),lam[:kplot], 'o',label='$\lambda$')
 k = linspace(1,kplot,kplot)
-numer = int(round(0.5*sqrt(lam[0])))
+#numer = int(round(0.5*sqrt(lam[0])))
+numer = int(round(lam[0]))
 
-plot(k,numer/k,'r',label='%i/k' % numer)
-legend(fontsize=15)
-xticks(fontsize=15); yticks(fontsize=15);
+plot(k,numer/k**2,'r',label='$%i/k^2$' % numer)
+legend(fontsize=24)
+xticks(fontsize=22); yticks(fontsize=22);
 xlim(1,20);
-title("First %i eigenvalues of Covariance matrix" % kplot, fontsize=15);
-savefigp('eigenvalues.jpg')
+ylim(10,10**(4.5));
+title("First %i eigenvalues of Covariance matrix" % kplot, fontsize=24);
+savefigp('eigenvalues.png')
 
-figure(figsize=(10,5))
-plot(xkm,tau(x)/norm(tau(x),2), 'k--', label='taper')
-plot(xkm,V[:,0],'b',label='k = 0')
-plot(xkm,V[:,1],'r',linewidth=2,label='k = 1')
-plot(xkm,V[:,2],'g',linewidth=2,label='k = 2')
-plot(xkm,V[:,3],'m',linewidth=1,label='k = 3')
-plot(xkm,V[:,4],'c',linewidth=1,label='k = 4')
-legend(loc='lower right',fontsize=13)
+figure(figsize=(12,7.0))
+## l2-norm normalized
+#plot(xkm,tau(x)/norm(tau(x),2), 'k--', label='taper')
+#plot(xkm,V[:,0],'b',label='k = 0')
+#plot(xkm,V[:,1],'r',linewidth=2,label='k = 1')
+#plot(xkm,V[:,2],'g',linewidth=2,label='k = 2')
+#plot(xkm,V[:,3],'m',linewidth=1,label='k = 3')
+#plot(xkm,V[:,4],'c',linewidth=1,label='k = 4')
+## max-norm normalized
+plot(xkm,tau(x), 'k--', label='taper',linewidth=3)
+plot(xkm,V[:,0]/max(V[:,0]),'b',label='k = 0')
+plot(xkm,V[:,1]/max(V[:,1]),'r',linewidth=2,label='k = 1')
+plot(xkm,V[:,2]/max(V[:,2]),'g',linewidth=2,label='k = 2')
+plot(xkm,V[:,3]/max(V[:,3]),'m',linewidth=1,label='k = 3')
+plot(xkm,V[:,4]/max(V[:,4]),'c',linewidth=1,label='k = 4')
+legend(loc='lower right',fontsize=24)
 xlim(0,140)
-xlabel('km down-dip')
-title('Eigenmodes')
-savefigp('eigenmodes.jpg')
+xticks(fontsize=22)
+ylim(-1.1,1.1)
+yticks(fontsize=22)
+xlabel('km down-dip',fontsize=22)
+title('Eigenmodes',fontsize=24)
+savefigp('eigenmodes.png')
 
 # Replace first eigenvector by mean:
 V[:,0] = mu
@@ -223,26 +234,30 @@ figure(figsize=(14,3))
 subplot(121)
 slip = mu
 plot(xkm, slip, 'k', lw=2,label="mean slip")
-legend(fontsize=12)
+legend(fontsize=16)
 #plot(xkm,mu,'g')
 ylim(-5,25)
 
 Mo = L*W*sum(abs(slip))/len(slip) * rigidity
 Mw = 2./3. * (log10(Mo) - 9.05)
-text(130,5,"Mw = %5.2f" % Mw, fontsize=12, color='k')
+text(130,5,"Mw = %5.2f" % Mw, fontsize=16, color='k')
 xlim(-50,200)
-xlabel('km down-dip')
-title('slip on fault plane')
+xticks(fontsize=16)
+yticks(fontsize=16)
+xlabel('km down-dip',fontsize=18)
+title('slip on fault plane',fontsize=20)
 
 subplot(122)
 z_dtopo = V[:,0]
 plot(xkm_dtopo, dZ[:,0], 'k', lw=2,label="mean deformation")
-legend(fontsize=12)
+legend(fontsize=16)
 xlim(-50,200)
+xticks(fontsize=16)
 ylim(-5,10)
-xlabel('km from trench towards shore')
-title('sea floor deformation')
-savefigp('sample_realization_00.jpg')
+yticks(fontsize=16)
+xlabel('km from trench towards shore',fontsize=18)
+title('sea floor deformation',fontsize=20)
+savefigp('sample_realization_00.png')
 random.seed(12333)  #12345 
 
 nterms = 20
@@ -257,32 +272,36 @@ for rno in range(1,10):
     subplot(121)
     plot(xkm,slip, 'b', lw=2,label="%i terms" % nterms)
     plot(xkm,slip3,'r', lw=2,label="%i terms" % nterms3)
-    legend(fontsize=12)
+    legend(fontsize=16)
     #plot(xkm,mu,'g')
     ylim(-5,25)
+    xticks(fontsize=16)
+    yticks(fontsize=16)
 
     Mo = L*W*sum(abs(slip))/len(slip) * rigidity
     Mw = 2./3. * (log10(Mo) - 9.05)
-    text(130,5,"Mw = %5.2f" % Mw, fontsize=12, color='b')
+    text(130,5,"Mw = %5.2f" % Mw, fontsize=16, color='b')
     Mo = L*W*sum(abs(slip[:nterms3]))/len(slip[:nterms3]) * rigidity
     Mw = 2./3. * (log10(Mo) - 9.05)
-    text(130,2,"Mw = %5.2f" % Mw, fontsize=12, color='r')
+    text(130,2,"Mw = %5.2f" % Mw, fontsize=16, color='r')
 
     xlim(-50,200)
-    xlabel('km down-dip')
-    title('slip on fault plane')
+    xlabel('km down-dip',fontsize=18)
+    #title('slip on fault plane',fontsize=20)
 
     subplot(122)
     plot(xkm_dtopo, z_dtopo, 'b', lw=2, label="%i terms" % nterms)
     plot(xkm_dtopo, z_dtopo3, 'r', lw=2,label="%i terms" % nterms3)
     #plot(xkm_dtopo, z_dtopo - z_dtopo3, 'g')
-    legend(fontsize=12)
+    legend(fontsize=16)
     #plot(xkm_dtopo, dZ[:,0], 'g')
     xlim(-50,200)
     ylim(-5,10)
-    xlabel('km from trench towards shore')
-    title('sea floor deformation')
-    savefigp('sample_realization_%s.jpg' % str(rno).zfill(2))
+    xticks(fontsize=16)
+    yticks(fontsize=16)
+    xlabel('km from trench towards shore',fontsize=18)
+    #title('sea floor deformation',fontsize=20)
+    savefigp('sample_realization_%s.png' % str(rno).zfill(2))
 
 
 if 0:
@@ -314,18 +333,20 @@ dzs_rho2 = normal_density(dzs, dZ_shore_mean, sum(b[1:3]**2))
 dzs_rho3 = normal_density(dzs, dZ_shore_mean, sum(b[1:4]**2))
 dzs_rho20 = normal_density(dzs, dZ_shore_mean, sum(b[1:21]**2))
 
-figure()
-plot(dzs, dzs_rho1, 'm', label='1 terms')
+figure(figsize=(5,3))
+plot(dzs, dzs_rho1, 'm', label='1 term')
 plot(dzs, dzs_rho2, 'g', label='2 terms')
 plot(dzs, dzs_rho3, 'r', label='3 terms')
 plot(dzs, dzs_rho20, 'b', label='20 terms')
 
 xlim(-4,4)
 ylim(0,1)
-legend()
-xlabel('Meters')
-title("True density for dZ at shore")
-savefigp("DBshore-true.jpg")
+xticks(fontsize=12)
+yticks(fontsize=12)
+legend(fontsize=14)
+xlabel('Meters',fontsize=14)
+title("True density for dZ at shore",fontsize=15)
+savefigp("DBshore-true.png")
 
 
 def test(ntrials = 10000, nterms=10, xkm_shore=300):
@@ -423,16 +444,18 @@ prob = hazard_curve(realizations, zetai)
 prob3 = hazard_curve(realizations3, zetai)
 prob2 = hazard_curve(realizations2, zetai)
 prob1 = hazard_curve(realizations1, zetai)
-figure(figsize=(10,5))
+figure(figsize=(10,6))
 semilogy(zetai, prob, 'b', label='20 terms')
 semilogy(zetai, prob3, 'r', label='3 terms')
 semilogy(zetai, prob2, 'g', label='2 terms')
 semilogy(zetai, prob1, 'm', label='1 terms')
-legend(loc='lower left')
-title('Hazard curve for depth proxy')
-xlabel('Exceedance value (meters)')
-ylabel('probability')
-savefigp('hazcurves1.jpg')
+legend(loc='lower left',fontsize=16)
+title('Hazard curve for depth proxy',fontsize=18)
+xlabel('Exceedance value (meters)',fontsize=16)
+ylabel('probability',fontsize=16)
+xticks(fontsize=16)
+yticks(fontsize=16)
+savefigp('hazcurves1.png')
 
 
 def plot_gaussian_contours():
@@ -446,7 +469,9 @@ figure()
 j = DepthProxy3 > 8
 plot_gaussian_contours()
 plot(zvals3[j,1],zvals3[j,2],'.')
-savefigp('z12_bigdepth.jpg')
+xticks(fontsize=16)
+yticks(fontsize=16)
+savefigp('z12_bigdepth.png')
 
 
 if 0:
@@ -462,84 +487,202 @@ figure()
 j = Energy3 > 9.5
 plot_gaussian_contours()
 plot(zvals3[j,1],zvals3[j,2],'.')
-savefigp('z12_bigenergy.jpg')
+xticks(fontsize=16)
+yticks(fontsize=16)
+savefigp('z12_bigenergy.png')
 
-## seaborn plots -- importing change matplotlib style
-#import seaborn as sns
+### KDE plots ###
 
-figure()
-sns.kdeplot(realizations['subsidence / uplift'],label='20 terms')
-sns.kdeplot(realizations3['subsidence / uplift'],label='3 terms')
+
+kde = stats.gaussian_kde(realizations['subsidence / uplift'])
+rho = kde.pdf(dzs)
+
+kde3 = stats.gaussian_kde(realizations3['subsidence / uplift'])
+rho3 = kde3.pdf(dzs)
+
+figure(figsize=(5,3))
+ax = axes()
+plot(dzs,rho,label='20 terms')
+plot(dzs,rho3,label='3 terms')
 plot(dzs, dzs_rho20, 'r', label='true density')
-legend()
+xlim(-4,4)
+ylim(0,1.0)
+legend(fontsize=14)
+xticks(fontsize=12)
+yticks(fontsize=12)
+title("Kernel density estimates for dZ at shore")
+xlabel('Meters',fontsize=14)
+savefigp('DBshore-samples.png')
+
+
+kde = stats.gaussian_kde(realizations['subsidence / uplift'])
+rho = kde.pdf(dzs)
+
+kde3 = stats.gaussian_kde(realizations3['subsidence / uplift'])
+rho3 = kde3.pdf(dzs)
+
+figure(figsize=(5,3))
+ax = axes()
+plot(dzs,rho,label='20 terms')
+plot(dzs,rho3,label='3 terms')
+plot(dzs, dzs_rho20, 'r', label='true density')
+legend(fontsize=14)
+xticks(fontsize=16)
+yticks(fontsize=16)
+xlim(-4,4)
+ylim(0,1.0)
+title("Kernel density estimates for dZ at shore",fontsize=14)
+xlabel('Meters',fontsize=14)
+savefigp('DBshore-samples.png')
+
+
+kde = stats.gaussian_kde(realizations['subsidence / uplift'])
+rho = kde.pdf(dzs)
+
+kde3 = stats.gaussian_kde(realizations3['subsidence / uplift'])
+rho3 = kde3.pdf(dzs)
+
+figure(figsize=(5,3))
+ax = axes()
+plot(dzs,rho,label='20 terms')
+plot(dzs,rho3,label='3 terms')
+plot(dzs, dzs_rho20, 'r', label='true density')
+legend(fontsize=14)
+xticks(fontsize=16)
+yticks(fontsize=16)
 xlim(-4,4)
 ylim(0,1.0)
 title("Kernel density estimates for dZ at shore")
 xlabel('Meters')
-savefigp('DBshore-samples.jpg')
-
-cmap_black = sns.dark_palette('black', as_cmap=True)
+savefigp('DBshore-samples.png')
 
 
-figure(figsize=(5,5))
-#sns.jointplot('EtaMax','Energy',data=realizations,kind='kde',
-#        xlim=(2,10),ylim=(0.4e7,1.1e7), stat_func=None)
 
-g = sns.JointGrid('EtaMax','Energy',data=realizations,\
-    xlim=(2,10),ylim=(4,11))
-g = g.plot_joint(sns.kdeplot, cmap=cmap_black)
-g = g.plot_marginals(sns.kdeplot, color='k', shade=True)
+## Joint denisty of Q1 and Q2:
+
+Q1 = 'EtaMax'
+Q2 = 'Energy'
+
+Nx = 200
+Ny = 201
+
+x0 = 2.
+x1 = 9.
+
+y0 = 4.
+y1 = 11.
+
+x = np.linspace(x0,x1,Nx)
+y = np.linspace(y0,y1,Ny)
+
+X,Y = np.meshgrid(x,y)
+
+xy = np.vstack((X.flatten(),Y.flatten()))
+
+# 20 terms:
+rvals = vstack((realizations[Q1].T, realizations[Q2].T))
+kde = stats.gaussian_kde(rvals)
+p = kde.pdf(xy) * (x1-x0)*(y1-y0)/float(Nx*Ny)
+rho = reshape(p,(Ny,Nx))
+fig = KDEplots.joint_plot(X,Y,rho,xname='EtaMax (m)',yname='Energy (PetaJoules)')
 savefigp('joint_Eta_Energy_20.jpg')
 
-figure(figsize=(5,5))
-#sns.jointplot('EtaMax','Energy',data=realizations3,kind='kde',
-#       xlim=(2,10),ylim=(0.4e7,1.1e7), stat_func=None)
-
-g = sns.JointGrid('EtaMax','Energy',data=realizations3,\
-    xlim=(2,10),ylim=(4,11))
-g = g.plot_joint(sns.kdeplot, cmap=cmap_black)
-g = g.plot_marginals(sns.kdeplot, color='k', shade=True)
-
+# 3 terms:
+rvals = vstack((realizations3[Q1].T, realizations3[Q2].T))
+kde = stats.gaussian_kde(rvals)
+p = kde.pdf(xy) * (x1-x0)*(y1-y0)/float(Nx*Ny)
+rho = reshape(p,(Ny,Nx))
+fig = KDEplots.joint_plot(X,Y,rho,xname='EtaMax (m)',yname='Energy (PetaJoules)')
 savefigp('joint_Eta_Energy_3.jpg')
 
+## Joint denisty of Q1 and Q2:
 
-#figure(figsize=(5,5))
-#sns.jointplot('EtaMax','subsidence / uplift',data=realizations,kind='kde',
-#        xlim=(2,10),ylim=(-3,3), stat_func=None)
-g = sns.JointGrid('EtaMax','subsidence / uplift',data=realizations,\
-    xlim=(2,10),ylim=(-3,3))
-g = g.plot_joint(sns.kdeplot, cmap=cmap_black)
-g = g.plot_marginals(sns.kdeplot, color='k', shade=True)
+Q1 = 'EtaMax'
+Q2 = 'subsidence / uplift'
+
+Nx = 200
+Ny = 201
+
+x0 = 2.
+x1 = 9.
+
+y0 = -3.
+y1 = 3.
+
+x = np.linspace(x0,x1,Nx)
+y = np.linspace(y0,y1,Ny)
+
+X,Y = np.meshgrid(x,y)
+
+xy = np.vstack((X.flatten(),Y.flatten()))
+
+# 20 terms:
+rvals = vstack((realizations[Q1].T, realizations[Q2].T))
+kde = stats.gaussian_kde(rvals)
+p = kde.pdf(xy) * (x1-x0)*(y1-y0)/float(Nx*Ny)
+rho = reshape(p,(Ny,Nx))
+fig = KDEplots.joint_plot(X,Y,rho,xname='EtaMax (m)',yname='subsidence/uplift (m)')
 savefigp('joint_Eta_DBshore_20.jpg')
 
-#figure(figsize=(5,5))
-#sns.jointplot('EtaMax','subsidence / uplift',data=realizations3,kind='kde',
-#        xlim=(2,10),ylim=(-3,3), stat_func=None)
-g = sns.JointGrid('EtaMax','subsidence / uplift',data=realizations3,\
-    xlim=(2,10),ylim=(-3,3))
-g = g.plot_joint(sns.kdeplot, cmap=cmap_black)
-g = g.plot_marginals(sns.kdeplot, color='k', shade=True)
+# 3 terms:
+rvals = vstack((realizations3[Q1].T, realizations3[Q2].T))
+kde = stats.gaussian_kde(rvals)
+p = kde.pdf(xy) * (x1-x0)*(y1-y0)/float(Nx*Ny)
+rho = reshape(p,(Ny,Nx))
+fig = KDEplots.joint_plot(X,Y,rho,xname='EtaMax (m)',yname='subsidence/uplift (m)')
 savefigp('joint_Eta_DBshore_3.jpg')
 
+# Energy densities:
 
-figure(figsize=(5,5))
-sns.kdeplot(realizations['Energy'], label='20 terms')
-sns.kdeplot(realizations3['Energy'], label='3 terms')
-sns.kdeplot(realizations2['Energy'], label='2 terms')
-sns.kdeplot(realizations1['Energy'], label='1 terms')
-xlim(0,20)
-xlabel('PetaJoules')
-title('Potential energy density')
-savefigp('kde_Energy.jpg')
+figure(figsize=(6,4))
+E = linspace(3,15)
+kde = stats.gaussian_kde(realizations['Energy'])
+rho = kde.pdf(E)
+plot(E, rho, label='20 terms')
 
+kde = stats.gaussian_kde(realizations3['Energy'])
+rho = kde.pdf(E)
+plot(E, rho, label='3 terms')
 
-figure(figsize=(5,5))
-sns.kdeplot(realizations['EtaMax'], label='20 terms')
-sns.kdeplot(realizations3['EtaMax'], label='3 terms')
-sns.kdeplot(realizations2['EtaMax'], label='2 terms')
-sns.kdeplot(realizations1['EtaMax'], label='1 terms')
-xlabel('Meters')
-title('EtaMax density')
-savefigp('kde_EtaMax.jpg')
+kde = stats.gaussian_kde(realizations2['Energy'])
+rho = kde.pdf(E)
+plot(E, rho, label='2 terms')
 
+kde = stats.gaussian_kde(realizations1['Energy'])
+rho = kde.pdf(E)
+plot(E, rho, label='1 terms')
+
+legend(fontsize=14)
+xlabel('PetaJoules',fontsize=14)
+xticks(fontsize=12)
+yticks(fontsize=12)
+title('Potential energy density',fontsize=14)
+savefigp('kde_Energy.png')
+
+# EtaMax densities:
+
+figure(figsize=(6,4))
+E = linspace(2,12)
+kde = stats.gaussian_kde(realizations['EtaMax'])
+rho = kde.pdf(E)
+plot(E, rho, label='20 terms')
+
+kde = stats.gaussian_kde(realizations3['EtaMax'])
+rho = kde.pdf(E)
+plot(E, rho, label='3 terms')
+
+kde = stats.gaussian_kde(realizations2['EtaMax'])
+rho = kde.pdf(E)
+plot(E, rho, label='2 terms')
+
+kde = stats.gaussian_kde(realizations1['EtaMax'])
+rho = kde.pdf(E)
+plot(E, rho, label='1 terms')
+
+legend(fontsize=14)
+xlabel('Meters',fontsize=14)
+xticks(fontsize=12)
+yticks(fontsize=12)
+title('EtaMax density',fontsize=14)
+savefigp('kde_EtaMax.png')
 
